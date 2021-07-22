@@ -36,8 +36,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ChannelListViewModel extends BaseViewModel implements PagerRecyclerView.Pageable<List<GroupChannel>>, LifecycleObserver {
 
-    private final String CONNECTION_HANDLER_ID = "CONNECTION_HANDLER_GROUP_CHANNEL_LIST" + System.currentTimeMillis();;
-    private final String CHANNEL_HANDLER_ID = "CHANNEL_HANDLER_GROUP_CHANNEL_LIST" + System.currentTimeMillis();;
+    private final String CONNECTION_HANDLER_ID = "CONNECTION_HANDLER_GROUP_CHANNEL_LIST" + System.currentTimeMillis();
+    ;
+    private final String CHANNEL_HANDLER_ID = "CHANNEL_HANDLER_GROUP_CHANNEL_LIST" + System.currentTimeMillis();
+    ;
 
     private final AtomicLong lastSyncTs = new AtomicLong(0);
     private final MutableLiveData<List<GroupChannel>> channelList = new MutableLiveData<>();
@@ -63,12 +65,13 @@ public class ChannelListViewModel extends BaseViewModel implements PagerRecycler
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    private void onResume(){
+    private void onResume() {
         Logger.dev(">> ChannelListViewModel::onResume()");
 
         SendBird.addConnectionHandler(CONNECTION_HANDLER_ID, new SendBird.ConnectionHandler() {
             @Override
-            public void onReconnectStarted() {}
+            public void onReconnectStarted() {
+            }
 
             @Override
             public void onReconnectSucceeded() {
@@ -76,7 +79,8 @@ public class ChannelListViewModel extends BaseViewModel implements PagerRecycler
             }
 
             @Override
-            public void onReconnectFailed() {}
+            public void onReconnectFailed() {
+            }
         });
 
         SendBird.addChannelHandler(CHANNEL_HANDLER_ID, new SendBird.ChannelHandler() {
@@ -160,27 +164,31 @@ public class ChannelListViewModel extends BaseViewModel implements PagerRecycler
     }
 
     private void markChannelSyncTs() {
-        this.lastSyncTs.set(System.currentTimeMillis() -  60000);
+        this.lastSyncTs.set(System.currentTimeMillis() - 60000);
     }
 
     private void updateIfExist(@NonNull GroupChannel channel) {
         Logger.dev(">> updateIfExist()");
-        synchronized (channelListCache) {
-            if (channelListCache.contains(channel)) {
-                channelListCache.remove(channel);
-                channelListCache.add(channel);
-                applyChannelList();
+        if (channelListQuery.belongsTo(channel)) {
+            synchronized (channelListCache) {
+                if (channelListCache.contains(channel)) {
+                    channelListCache.remove(channel);
+                    channelListCache.add(channel);
+                    applyChannelList();
+                }
             }
         }
     }
 
     private void updateOrInsert(@NonNull GroupChannel channel) {
-        Logger.dev(">> updateOrInsert()");
-        synchronized (channelListCache) {
-            channelListCache.remove(channel);
-            channelListCache.add(channel);
+        Logger.dev(">> updateOrInsert() Edited");
+        if (channelListQuery.belongsTo(channel)) {
+            synchronized (channelListCache) {
+                channelListCache.remove(channel);
+                channelListCache.add(channel);
+            }
+            applyChannelList();
         }
-        applyChannelList();
     }
 
     private boolean deleteChannel(@NonNull GroupChannel deletedChannel) {
@@ -314,7 +322,7 @@ public class ChannelListViewModel extends BaseViewModel implements PagerRecycler
         channel.setMyPushTriggerOption(enable ? GroupChannel.PushTriggerOption.ALL : GroupChannel.PushTriggerOption.OFF, new GroupChannel.GroupChannelSetMyPushTriggerOptionHandler() {
             @Override
             public void onResult(SendBirdException e) {
-                Logger.i("++ setPushNotification enable : %s result : %s",enable, e == null ? "success" : "error");
+                Logger.i("++ setPushNotification enable : %s result : %s", enable, e == null ? "success" : "error");
             }
         });
     }
